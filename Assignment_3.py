@@ -26,7 +26,7 @@ def build_index(tokens):
     return index
 
 def main():
-    docs = parse_json_files('/Users/colethompson/Documents/A3/ANALYST')
+    docs = parse_json_files('/Users/colethompson/Documents/A3/DEV')
     tokens = tokenize(docs)
     index = build_index(tokens)
 
