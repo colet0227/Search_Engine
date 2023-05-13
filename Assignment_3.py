@@ -14,9 +14,8 @@ def parse_json_files(directory):
     return docs
 
 def tokenize(docs):
-    pattern = r'[A-Za-z0-9]+'
     for doc_id, text in docs.items():
-        words = re.findall(pattern, text)
+        words = re.sub('[^0-9a-zA-Z]+', ' ', text).lower().split()
         yield doc_id, Counter(words)
 
 def build_index(tokens):
