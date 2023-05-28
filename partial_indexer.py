@@ -1,92 +1,175 @@
-import json
-import os
-import nltk
+import csv
+import re
 import sys
+import json
 from collections import defaultdict
 from bs4 import BeautifulSoup
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
+from nltk.stem import SnowballStemmer
 
 class PartialIndexer:
-    # def __init__(self, max_size=5 * 1024 * 1024):  # 5MB in bytes
-    def __init__(self, max_size=100000):  # 5MB in bytes
-        self.stemmer = PorterStemmer()
+    def __init__(self):
+        # Stemmer from nltk library - test with PorterStemmer too
+        self.stemmer = SnowballStemmer("english")
 
-        # The keys of self.index will be the tokens
-        self.index = defaultdict(lambda: {'freq': 0, 'docs': set(), 'importance': defaultdict(int)})
-        self.important_tags = ['b', 'strong', 'h1', 'h2', 'h3', 'title']
+        # Structure of index
+        self.index = defaultdict(lambda: {'token_freq': 0, 'document_freq': 0, 'doc_ids': defaultdict(lambda: {'id': '', 'freq': 0, 'weight': 0, 'tf_idf': 0})})
+        # {
+        #   "token": {
+        #       "token_freq": 0,
+        #       "document_freq": 0,
+        #       "doc_ids": {
+        #           "id": {
+        #               "id": "",
+        #               "token_freq": 0,
+        #               "weight": 0,
+        #               "tf_idf_score": 0,
+        #           },
+        #           "id": {
+        #               "id": "",
+        #               "token_freq": 0,
+        #               "weight": 0,
+        #               "tf_idf_score": 0,
+        #           }
+        #           etc...
+        #       }
+        #   }
+        # }
 
+        self.HTML_WEIGHTS = {
+            # Title added additional weight because of extreme importance
+            'title': 25, 
+
+            # Headers
+            'h1': 10,
+            'h2': 9,
+            'h3': 7,
+            'h4': 4,
+            'h5': 2,
+            'h6': 1,
+
+            # Bold
+            'b': 3,
+            'strong': 3,
+
+            # Italic
+            'i': 2,
+            'em': 2
+        }
+
+        # Current size of index
         self.current_size = 0
-        self.max_size = max_size
+
+        # Max size before we create a partial index
+        self.max_size = 5242880 # 5mb
+
+        # Unique doc id we increment (hash value)
+        self.id_counter = 1
+
+        # URL to unique ID map
+        # Useful to first check if url already has an assigned id without having to check file
+        self.url_id_map = {}
 
     def tokenize_and_stem(self, text):
-        tokens = word_tokenize(text)
+        # Use regex expression
+        tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text)
 
-        # Use PorterStemmer to stem token before adding
-        return [self.stemmer.stem(token) for token in tokens]
+        # Lower and stem before returning list of tokens
+        return [self.stemmer.stem(token.lower()) for token in tokens]
 
-    def add_document(self, document, doc_id):
+    def add_document(self, document, document_url, url_id_map_path):
+        # Generate ID for the document
+        id = self.get_id(document_url)
+
+        # Parse the document
         soup = BeautifulSoup(document, 'html.parser')
 
-        # Tokenize and add all text in the document
+        # Add the document URL and its ID to the URL-ID csv file
+        self.add_url_to_map(document_url, id, url_id_map_path)
+
+        # Get all the text in the url and tokenize
         all_text = soup.get_text()
         tokens = self.tokenize_and_stem(all_text)
 
         for token in tokens:
-            self.index[token]['freq'] += 1
-            self.index[token]['docs'].add(doc_id)
-            self.index[token]['importance'][doc_id] += 1
+            # If this is the first occurrence of the token, initialize its entry in the index
+            if token not in self.index:
+                self.index[token] = {'token_freq': 0, 'document_freq': 0, 'doc_ids': defaultdict(lambda: {'id': id, 'freq': 0, 'weight': 0, 'tf_idf': 0})}
 
-        # Find the important tags, tokenize their text, and increment the importance of those tokens
-        for tag in soup.find_all(self.important_tags):
+            # Increase the total frequency of the token
+            self.index[token]['token_freq'] += 1
+
+            # If this is the first occurrence of the token in this document, initialize its entry in doc_ids and increase the document frequency
+            if id not in self.index[token]['doc_ids']:
+                self.index[token]['document_freq'] += 1
+                self.index[token]['doc_ids'][id] = {'id': id, 'freq': 1, 'weight': 0, 'tf_idf': 0}
+            else:
+                # Otherwise, just increase the frequency of the token in this document
+                self.index[token]['doc_ids'][id]['freq'] += 1
+
+        # Process each HTML tag in the document
+        for tag in soup.find_all():
+            # Get the weight of the tag
+            weight = self.HTML_WEIGHTS.get(tag.name, 1)
+
+            # Tokenize and stem the text within the tag
             important_tokens = self.tokenize_and_stem(tag.get_text())
+
             for token in important_tokens:
-                self.index[token]['importance'][doc_id] += 1
-        
+                # If the token is in the index and its ID is in doc_ids, increase its weight
+                if token in self.index and id in self.index[token]['doc_ids']:
+                    self.index[token]['doc_ids'][id]['weight'] += weight
+
+        # Update the current size of the index
         self.update_index_size()
-        self.current_size += len(document.encode('utf-8'))  # document size in bytes
+
+        # Increase the current size by the size of the document
+        self.current_size += len(document.encode('utf-8'))
+
 
     def should_write_partial_index(self):
-        # In a real implementation, replace with actual memory usage of self.index
+        # If current size exceeds max size write a partial index
         return self.current_size >= self.max_size
-    
+
     def update_index_size(self):
+        # Update index size
         self.current_size = sys.getsizeof(self.index)
 
     def write_partial_index(self, path):
-        print("Writing index to ", path)  # Just for debugging
+        # Write to a csv file
+        with open(path, 'w', newline='') as csvfile:
+            # Define the fields or columns in the CSV file
+            fieldnames = ['Token', 'Data']
 
-        with open(path, 'w') as f:
-            # Convert sets to lists for JSON serialization
-            index = {k: {ik: list(iv) if isinstance(iv, set) else iv for ik, iv in v.items()} for k, v in self.index.items()}
-            json.dump(index, f)
+            # Create a CSV writer that writes dictionaries into the file and write header
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            # Iterate over each token in the index
+            for token in sorted(self.index.keys()):
+                # Write token index structure as shown above
+                writer.writerow({'Token': token, 'Data': json.dumps(self.index[token])})
+
+        # Reset current size and clear index dictionary (might free up memory idk)
         self.current_size = 0
         self.index.clear()
 
+    def get_id(self, url):
+        # Check if the URL is already in the url_id_map dictionary
+        if url not in self.url_id_map:
+            # If not, assign the current id_counter value to this URL in the dictionary
+            self.url_id_map[url] = self.id_counter
 
-if __name__ == "__main__":
-    partial_indexer = PartialIndexer()
+            # Increment the id_counter for the next new URL's id value
+            self.id_counter += 1
+        
+        # Return id
+        return self.url_id_map[url]
 
-    root_dir = "/Users/colethompson/Documents/A3/ANALYST"  # Root directory path
-    file_paths = []  # This list will contain the paths of all JSON files
+    def add_url_to_map(self, url, id, filename):
+        # APPEND to csv file
+        with open(filename, mode='a', newline='', encoding='utf-8') as file:
+            # Create a CSV writer object that will write into the file
+            writer = csv.writer(file)
 
-    # Traverse through all subdirectories
-    for dir_path, _, filenames in os.walk(root_dir):
-        for file in filenames:
-            if file.endswith(".json"):  # If the file is a JSON file
-                file_paths.append(os.path.join(dir_path, file))  # Add its path to the list
-
-    print("Current working directory: ", os.getcwd())  # Print the current working directory
-
-    partial_index_count = 0
-    for path in file_paths:
-        with open(path, 'r') as file:
-            data = json.load(file)
-            partial_indexer.add_document(data['content'], data['url'])
-
-            print("Current index size: ", partial_indexer.current_size)  # Print current index size
-
-            if partial_indexer.should_write_partial_index():
-                print(f'Writing partial index {partial_index_count}...')
-                partial_indexer.write_partial_index(f'/Users/colethompson/Documents/A3/Tests/partial_index_{partial_index_count}.json')
-                partial_index_count += 1
+            # Write a new row into the CSV file with the id and the url
+            writer.writerow([id, url])
