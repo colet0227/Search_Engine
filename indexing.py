@@ -130,6 +130,6 @@ def calculate_tfidf(merged_index_path, total_documents):
             temp_merged_index_writer.writerow({'Token': row['Token'], 'Data': json.dumps(token_data)})
 
     os.remove(merged_index_path)
-    os.rename(temp_merged_index_path, merged_index_path)
+    os.rename(temp_merged_index_path, merged_index_path) 
 
 
