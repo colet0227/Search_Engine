@@ -1,17 +1,21 @@
 import json
 import os
+import nltk
+import sys
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
 class PartialIndexer:
-    def __init__(self, max_size=5 * 1024 * 1024):  # 5MB in bytes
+    # def __init__(self, max_size=5 * 1024 * 1024):  # 5MB in bytes
+    def __init__(self, max_size=100000):  # 5MB in bytes
         self.stemmer = PorterStemmer()
 
         # The keys of self.index will be the tokens
         self.index = defaultdict(lambda: {'freq': 0, 'docs': set(), 'importance': defaultdict(int)})
         self.important_tags = ['b', 'strong', 'h1', 'h2', 'h3', 'title']
+
         self.current_size = 0
         self.max_size = max_size
 
@@ -27,6 +31,7 @@ class PartialIndexer:
         # Tokenize and add all text in the document
         all_text = soup.get_text()
         tokens = self.tokenize_and_stem(all_text)
+
         for token in tokens:
             self.index[token]['freq'] += 1
             self.index[token]['docs'].add(doc_id)
@@ -37,12 +42,20 @@ class PartialIndexer:
             important_tokens = self.tokenize_and_stem(tag.get_text())
             for token in important_tokens:
                 self.index[token]['importance'][doc_id] += 1
+        
+        self.update_index_size()
+        self.current_size += len(document.encode('utf-8'))  # document size in bytes
 
     def should_write_partial_index(self):
         # In a real implementation, replace with actual memory usage of self.index
         return self.current_size >= self.max_size
+    
+    def update_index_size(self):
+        self.current_size = sys.getsizeof(self.index)
 
     def write_partial_index(self, path):
+        print("Writing index to ", path)  # Just for debugging
+
         with open(path, 'w') as f:
             # Convert sets to lists for JSON serialization
             index = {k: {ik: list(iv) if isinstance(iv, set) else iv for ik, iv in v.items()} for k, v in self.index.items()}
@@ -54,7 +67,7 @@ class PartialIndexer:
 if __name__ == "__main__":
     partial_indexer = PartialIndexer()
 
-    root_dir = "/Users/colethompson/Documents/A3/DEV"  # Root directory path
+    root_dir = "/Users/colethompson/Documents/A3/ANALYST"  # Root directory path
     file_paths = []  # This list will contain the paths of all JSON files
 
     # Traverse through all subdirectories
@@ -63,11 +76,17 @@ if __name__ == "__main__":
             if file.endswith(".json"):  # If the file is a JSON file
                 file_paths.append(os.path.join(dir_path, file))  # Add its path to the list
 
+    print("Current working directory: ", os.getcwd())  # Print the current working directory
+
     partial_index_count = 0
     for path in file_paths:
         with open(path, 'r') as file:
             data = json.load(file)
             partial_indexer.add_document(data['content'], data['url'])
+
+            print("Current index size: ", partial_indexer.current_size)  # Print current index size
+
             if partial_indexer.should_write_partial_index():
-                partial_indexer.write_partial_index(f'partial_index_{partial_index_count}.json')
+                print(f'Writing partial index {partial_index_count}...')
+                partial_indexer.write_partial_index(f'/Users/colethompson/Documents/A3/Tests/partial_index_{partial_index_count}.json')
                 partial_index_count += 1
