@@ -78,7 +78,7 @@ def load_mapping(mapping_path):
     with open(mapping_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)  # Skip the header row if there is one
-        mapping = {rows[1]: rows[0] for rows in reader}
+        mapping = {rows[0]: rows[1] for rows in reader}
     return mapping
 
 def search(query, index_file, secondary_index, mapping):

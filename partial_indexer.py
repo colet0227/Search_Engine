@@ -5,6 +5,7 @@ import json
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from nltk.stem import SnowballStemmer
+from urllib.parse import urldefrag
 
 class PartialIndexer:
     def __init__(self):
@@ -77,11 +78,21 @@ class PartialIndexer:
         return [self.stemmer.stem(token.lower()) for token in tokens]
 
     def add_document(self, document, document_url, url_id_map_path):
+        # Defrag the url first
+        document_url, _ = urldefrag(document_url)
+
+        # Check if the URL already exists in the map
+        if document_url in self.url_id_map:
+            return
+
         # Generate ID for the document
         id = self.get_id(document_url)
 
         # Parse the document
         soup = BeautifulSoup(document, 'html.parser')
+
+        # Add the document URL and its ID to the URL-ID csv file
+        self.add_url_to_map(document_url, id, url_id_map_path)
 
         # Add the document URL and its ID to the URL-ID csv file
         self.add_url_to_map(document_url, id, url_id_map_path)
