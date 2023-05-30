@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    {% for result in results %}
+        <p>{{ result[0] }}: {{ result[1] }}</p>
+    {% endfor %}
+    <a href="/">Back to home</a>
+</body>
+</html>

@@ -1,118 +1,94 @@
-import re
-import csv
 import json
-import sys
+import time
+import re
 from nltk.stem import SnowballStemmer
+from itertools import combinations
+
+class IndexReader:
+    def __init__(self, merged_index_path, secondary_index_path):
+        self.secondary_index = self.load_secondary_index(secondary_index_path)
+        self.index_file = open(merged_index_path, 'r')
+        
+    @staticmethod
+    def load_secondary_index(secondary_index_path):
+        secondary_index = {}
+        with open(secondary_index_path, 'r') as f:
+            for line in f:
+                token, offset = line.strip().split(':')
+                secondary_index[token] = int(offset)
+        return secondary_index
+
+    def get_postings_list(self, token):
+        line_start = self.secondary_index.get(token)
+        if line_start is not None:
+            self.index_file.seek(line_start)
+            line = self.index_file.readline()
+            row_token, row_data = line.split(':', 1)
+            if row_token == token:
+                try:
+                    return json.loads(row_data)
+                except json.JSONDecodeError:
+                    print(f"Error parsing JSON data: {row_data}")
+        return None
 
 stemmer = SnowballStemmer("english")
-MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.csv'
-SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.csv'
-MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.csv'
-
-def load_secondary_index(secondary_index_path):
-    secondary_index = {}
-    with open(secondary_index_path, 'r') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            secondary_index[row[0]] = int(row[1])
-    return secondary_index
-
-def preprocess_query(query):
-    query = query.lower()
-    query = re.sub(r'\W+', ' ', query)
-    query_tokens = query.split()
-    query_tokens = [stemmer.stem(token) for token in query_tokens]
-    return query_tokens
-
-def get_postings_list(token, secondary_index, index_file):
-    first_char = token[0]
-    if first_char in secondary_index:
-        position = secondary_index[first_char]
-        index_file.seek(position)
-        csv.field_size_limit(sys.maxsize)
-        reader = csv.reader(index_file)
-        for row in reader:
-            row_token, row_data = row[0], row[1]
-            if row_token == token:
-                return json.loads(row_data)
-    return None
-
-
-def get_docs(query_tokens, secondary_index, index_file):
-    doc_lists = []
-    for token in query_tokens:
-        postings_list = get_postings_list(token, secondary_index, index_file)
-        if postings_list is not None:
-            docs = postings_list.get('doc_ids', {}).keys()
-            doc_lists.append(set(docs))
-    return doc_lists
-
-def intersect_doc_lists(doc_lists):
-    if not doc_lists:
-        return set()
-    intersected_list = doc_lists[0]
-    for doc_list in doc_lists[1:]:
-        intersected_list = intersected_list.intersection(doc_list)
-    return intersected_list
-
-def calculate_scores(intersected_list, query_tokens, secondary_index, index_file):
-    scores = {}
-    for doc_id in intersected_list:
-        scores[doc_id] = 0
-        for token in query_tokens:
-            postings_list = get_postings_list(token, secondary_index, index_file)
-            if postings_list is not None:
-                doc_data = postings_list['doc_ids'].get(doc_id)
-                if doc_data:
-                    tf_idf = doc_data['tf_idf']
-                    weight = doc_data['weight']
-                    score = weight + tf_idf
-                    scores[doc_id] += score
-    return scores
-
-def rank_documents(scores):
-    ranked_docs = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    return ranked_docs[:5]
+MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.txt'
+SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.txt'
+MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.txt'
+MAX_DOCS_PER_TOKEN = 100
+WEIGHT_THRESHOLD = 0.1
 
 def load_mapping(mapping_path):
     with open(mapping_path, 'r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip the header row if there is one
-        mapping = {rows[1]: rows[0] for rows in reader}
-    return mapping
+        return {row.split(':', 1)[0]: row.split(':', 1)[1].strip() for row in file.readlines()}
 
-def search(query, index_file, secondary_index, mapping):
+
+def preprocess_query(query):
+    words = re.findall(r'[a-zA-Z0-9]+', query)
+    return [stemmer.stem(token.lower()) for token in words]
+
+def get_docs(query_tokens, index_reader):
+    return [set(list(index_reader.get_postings_list(token)['doc_ids'].keys())[:MAX_DOCS_PER_TOKEN]) for token in query_tokens if index_reader.get_postings_list(token) is not None]
+
+def union_doc_lists(doc_lists):
+    return set.union(*doc_lists) if doc_lists else set()
+
+def calculate_scores(union_docs, query_tokens, index_reader):
+    scores = {}
+    for doc_id in union_docs:
+        scores[doc_id] = sum(index_reader.get_postings_list(token)['doc_ids'].get(doc_id, {}).get('tf_idf', 0) for token in query_tokens if index_reader.get_postings_list(token) is not None)
+        if scores[doc_id] < WEIGHT_THRESHOLD:
+            del scores[doc_id]
+    return scores
+
+def rank_documents(scores, num_results=100):
+    return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:num_results]
+
+def search(query, index_reader, mapping, num_results=100):
+    start_time = time.time()
+
     query_tokens = preprocess_query(query)
-    print(f"Preprocessed query tokens: {query_tokens}")
+    union_docs = union_doc_lists(get_docs(query_tokens, index_reader))
 
-    doc_lists = get_docs(query_tokens, secondary_index, index_file)
-    print(f"Doc lists: {doc_lists}")
+    if len(union_docs) < num_results:
+        for i in range(len(query_tokens)-1, 0, -1):
+            for subset in combinations(query_tokens, i):
+                subset_union_docs = union_doc_lists(get_docs(list(subset), index_reader))
+                union_docs.update(subset_union_docs)
+                if len(union_docs) >= num_results:
+                    break
+            if len(union_docs) >= num_results:
+                break
 
-    intersected_docs = intersect_doc_lists(doc_lists)
-    print(f"Intersected Docs: {intersected_docs}")
-
-    scores = calculate_scores(intersected_docs, query_tokens, secondary_index, index_file)
-    print(f"Scores: {scores}")
-
-    top_docs = rank_documents(scores)
-    print(f"Top Docs before mapping: {top_docs}")
-
+    top_docs = rank_documents(calculate_scores(union_docs, query_tokens, index_reader), num_results)
     top_docs = [(mapping[doc_id], score) for doc_id, score in top_docs]
-    print(f"Top Docs after mapping: {top_docs}")
 
+    print(f"Elapsed time: {(time.time() - start_time) * 1000} milliseconds")
     return top_docs
 
-
 if __name__ == '__main__':
-    secondary_index_path = SECONDARY_PATH
-    merged_index_path = MERGED_PATH
-    mapping_path = MAPPING_PATH
-
-    secondary_index = load_secondary_index(secondary_index_path)
-    mapping = load_mapping(mapping_path)
-
-    query = input("Search: ")
+    index_reader = IndexReader(MERGED_PATH, SECONDARY_PATH)
+    mapping = load_mapping(MAPPING_PATH)
     
-    with open(merged_index_path, 'r') as index_file:
-        top_docs = search(query, index_file, secondary_index, mapping)
-    print(top_docs)
+    query = input("Search: ")
+    print(search(query, index_reader, mapping))
