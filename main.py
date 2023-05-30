@@ -11,6 +11,10 @@ OUTPUT_PATH = '/Users/colethompson/Documents/A3/Updated'
 
 if __name__ == "__main__":
     generate_secondary_index('/Users/colethompson/Documents/A3/Updated/merged_index.txt', SECONDARY_PATH)
+
+
+
+
     # partial_indexer = PartialIndexer()
 
     # # Root directory path

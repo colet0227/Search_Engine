@@ -11,8 +11,12 @@ class IndexReader:
         
     @staticmethod
     def load_secondary_index(secondary_index_path):
+        secondary_index = {}
         with open(secondary_index_path, 'r') as f:
-            return {row[0]: int(row[1]) for row in f.readlines()}
+            for line in f:
+                token, offset = line.strip().split(':')
+                secondary_index[token] = int(offset)
+        return secondary_index
 
     def get_postings_list(self, token):
         line_start = self.secondary_index.get(token)
@@ -36,11 +40,12 @@ WEIGHT_THRESHOLD = 0.1
 
 def load_mapping(mapping_path):
     with open(mapping_path, 'r') as file:
-        return {row.split(':')[0]: row.split(':')[1].strip() for row in file.readlines()}
+        return {row.split(':', 1)[0]: row.split(':', 1)[1].strip() for row in file.readlines()}
+
 
 def preprocess_query(query):
-    query = re.sub(r'\W+', ' ', query.lower())
-    return [stemmer.stem(token) for token in query.split()]
+    words = re.findall(r'[a-zA-Z0-9]+', query)
+    return [stemmer.stem(token.lower()) for token in words]
 
 def get_docs(query_tokens, index_reader):
     return [set(list(index_reader.get_postings_list(token)['doc_ids'].keys())[:MAX_DOCS_PER_TOKEN]) for token in query_tokens if index_reader.get_postings_list(token) is not None]
@@ -87,8 +92,3 @@ if __name__ == '__main__':
     
     query = input("Search: ")
     print(search(query, index_reader, mapping))
-    # with open(MERGED_PATH, "r") as file:
-    #     file.seek(2828)  # Moves the cursor to the specified position
-    #     # file.seek(2829)
-    #     # 62
-    #     print(file.readline())  # Reads the line at the current cursor position

@@ -57,7 +57,7 @@ class PartialIndexer:
         self.url_id_map = {}
 
     def tokenize_and_stem(self, text):
-        tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text)
+        tokens = re.findall(r'[a-zA-Z0-9]+', text)
         return [self.stemmer.stem(token.lower()) for token in tokens]
 
     def add_document(self, document, document_url, url_id_map_path):
