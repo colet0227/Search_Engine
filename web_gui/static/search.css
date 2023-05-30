@@ -1,0 +1,24 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #d9dcd9;
+    padding: 20px;
+    margin: 0;
+}
+
+.container {
+    text-align: left;
+}
+
+h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+#results {
+    font-size: 1.2em;
+}
+
+.result-item {
+    margin-bottom: 30px;
+}
