@@ -1,7 +1,7 @@
 /* General Styles */
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #d9dcd9;
+    background-color: #f1ece3;
     padding: 20px;
     margin: 0;
 }
@@ -19,6 +19,18 @@ h1 {
     font-size: 1.2em;
 }
 
-.result-item {
+.search-result {
     margin-bottom: 30px;
+}
+
+/* Styles for "Back to Search" button */
+#back-button {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
 }

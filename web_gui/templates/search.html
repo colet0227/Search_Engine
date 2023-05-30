@@ -9,11 +9,12 @@
             <h1>Search Results</h1>
             <div class="results">
                 {% for result in results %}
-                    <div class="result-item">
-                        <p>{{result}}</p>
+                    <div class="search-result">
+                        <a href="{{ result[0] }}" target="_blank">{{ result[0] }}</a>
                     </div>
                 {% endfor %}
             </div>
         </div>
+        <a href="{{ url_for('home') }}" id="back-button">Back to Search</a>
     </body>
 </html>

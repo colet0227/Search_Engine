@@ -5,13 +5,19 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to the ICS Search Engine!</h1>
-        <form action="/search" method="post">
-            <input id="search-input" type="text" name="query" placeholder="Search..." required>
-            <br>
-            <input id="search-button" type="submit" value="Search">
-        </form>
+    <div class="content">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        </div>
+        
+        <div class="main-container">
+            <h1>Welcome to the ICS Search Engine!</h1>
+            <form action="/search" method="post">
+                <input id="search-input" type="text" name="query" placeholder="Enter search terms" required>
+                <br>
+                <input id="search-button" type="submit" value="Search">
+            </form>
+        </div>
     </div>
 </body>
 </html>

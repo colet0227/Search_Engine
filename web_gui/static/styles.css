@@ -1,15 +1,27 @@
-/* General Styles */
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #d9dcd9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    background-color: #f1ece3;
+    height: 85vh;
     margin: 0;
+    overflow: hidden;
 }
 
-.container {
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.logo-container img {
+    display: block;
+    margin-bottom: 30px;
+    width: 200px;
+    height: auto;
+}
+
+.main-container {
     text-align: center;
 }
 
@@ -17,8 +29,9 @@ body {
     width: 60%;
     padding: 10px;
     font-size: 18px;
-    border-radius: 5px;
-    border: none;
+    border-radius: 100px;
+    border: 1px solid #000;
+    background-color: rgb(255, 254, 250);
 }
 
 #search-button {
