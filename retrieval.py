@@ -13,7 +13,7 @@ class IndexReader:
         self.secondary_index = self.load_secondary_index(secondary_index_path)
         self.index_file = open(merged_index_path, 'r')
 
-    def load_secondary_index(secondary_index_path):
+    def load_secondary_index(self, secondary_index_path):
         secondary_index = {}
         with open(secondary_index_path, 'r') as f:
             reader = csv.reader(f)

@@ -39,8 +39,8 @@ class PartialIndexer:
 
         # Weights assigned to HTML tags
         self.HTML_WEIGHTS = {
-            'title': 20,  # Title has highest weight
-            'h1': 10, 'h2': 9, 'h3': 7, 'h4': 4, 'h5': 2, 'h6': 1,  # Headers
+            'title': 30,  # Title has highest weight
+            'h1': 20, 'h2': 15, 'h3': 7, 'h4': 4, 'h5': 2, 'h6': 1,  # Headers
             'b': 3, 'strong': 3,  # Bold
             'i': 2, 'em': 2  # Italic
         }
