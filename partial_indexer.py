@@ -2,6 +2,7 @@ import re
 import sys
 import json
 import math
+import csv
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from nltk.stem import SnowballStemmer
@@ -48,7 +49,7 @@ class PartialIndexer:
         self.current_size = 0
 
         # Max size before we create a partial index
-        self.max_size = 200000
+        self.max_size = 1000000 # 5242880 5b
 
         # Unique doc id we increment (hash value)
         self.id_counter = 1
@@ -77,10 +78,9 @@ class PartialIndexer:
             self.index[token]['token_freq'] += 1
             if id not in self.index[token]['doc_ids']:
                 self.index[token]['document_freq'] += 1
-                self.index[token]['doc_ids'][id] = {'id': id, 'freq': 1, 'weight': 0, 'tf_idf': 0}
+                self.index[token]['doc_ids'][id] = {'id': id, 'freq': 1, 'weight': 0}
             else:
                 self.index[token]['doc_ids'][id]['freq'] += 1
-
 
         for tag in soup.find_all():
             weight = self.HTML_WEIGHTS.get(tag.name, 1)
@@ -88,17 +88,11 @@ class PartialIndexer:
 
             for token in important_tokens:
                 if token in self.index and id in self.index[token]['doc_ids']:
-                    tf = 1 + math.log(self.index[token]['doc_ids'][id]['freq'])
-                    if self.index[token]['document_freq'] != 0:
-                        idf = math.log(len(self.url_id_map) / self.index[token]['document_freq'])
-                    else:
-                        idf = 0
-                    tf_idf = tf * idf
-                    self.index[token]['doc_ids'][id]['weight'] += tf_idf * weight
-                    self.index[token]['doc_ids'][id]['tf_idf'] = tf_idf
+                    self.index[token]['doc_ids'][id]['weight'] += weight
 
         self.update_index_size()
         self.current_size += len(document.encode('utf-8'))
+
 
     def should_write_partial_index(self):
         return self.current_size >= self.max_size
@@ -107,9 +101,19 @@ class PartialIndexer:
         self.current_size = sys.getsizeof(self.index)
 
     def write_partial_index(self, path):
-        with open(path, 'w') as txtfile:
+        # with open(path, 'w') as txtfile:
+        #     for token in sorted(self.index.keys()):
+        #         txtfile.write(f'{token}: {json.dumps(self.index[token])}\n')
+
+        # self.current_size = 0
+        # self.index.clear()
+        with open(path, 'w', newline='') as csvfile:
+            fieldnames = ['token', 'data']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
             for token in sorted(self.index.keys()):
-                txtfile.write(f'{token}: {json.dumps(self.index[token])}\n')
+                writer.writerow({'token': token, 'data': json.dumps(self.index[token])})
 
         self.current_size = 0
         self.index.clear()
@@ -121,5 +125,16 @@ class PartialIndexer:
         return self.url_id_map[url]
 
     def add_url_to_map(self, url, id, filename):
-        with open(filename, mode='a', encoding='utf-8') as file:
-            file.write(f'{id}:{url}\n')
+        # with open(filename, mode='a', encoding='utf-8') as file:
+        #     file.write(f'{id}:{url}\n')
+        with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['id', 'url']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            if csvfile.tell() == 0:
+                writer.writeheader()
+
+            writer.writerow({'id': id, 'url': url})
+
+
+

@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import csv
 import shutil
 
 def count_documents(url_id_map_path):
@@ -71,32 +72,30 @@ def merge_partial_indices(partial_index_paths, merged_index_path):
 
 
 def generate_secondary_index(merged_index_path, secondary_index_path):
-    with open(merged_index_path, 'r') as merged_index, open(secondary_index_path, 'w') as secondary_index:
-        # last_token = None
-        j = 0
+    with open(merged_index_path, 'r') as merged_index, open(secondary_index_path, 'w', newline='') as secondary_index:
+        writer = csv.writer(secondary_index)
 
-        while True:
-            i = j
-
+        line = merged_index.readline()
+        while line:
+            byte_offset = merged_index.tell() - len(line) - 1  # "-1" accounts for newline character
+            token = line.split(",")[0]
+            writer.writerow([token, byte_offset])
             line = merged_index.readline()
-            # print(line)
-            # break
-            if not line:
-                break
-            
-            for _ in line:
-                j += 1
-
-            token, json_data = line.split(':', 1)  # split only once, so that the token can contain ":"
-
-            secondary_index.write(f'{token}:{i}\n')
 
 def calculate_tfidf(merged_index_path, total_documents):
-    with open(merged_index_path, 'r') as merged_index, open(merged_index_path + '.tmp', 'w') as new_merged_index:
-        for line in merged_index:
-            token, data_str = line.strip().split(':', 1)
-            try:
-                data = json.loads(data_str)
+    temp_merged_index_path = merged_index_path + '.tmp'
+    with open(merged_index_path, 'r') as infile, open(temp_merged_index_path, 'w') as outfile:
+        reader = csv.reader(infile)
+        writer = csv.writer(outfile)
+        for row in reader:
+            if row:  # Check that row is not empty
+                token = row[0]
+                data_str = row[1]
+                try:
+                    data = json.loads(data_str)
+                except json.JSONDecodeError as e:
+                    print(f"Error parsing JSON data for line: {row}")
+                    continue
 
                 idf = math.log(total_documents / data['document_freq'])
 
@@ -106,11 +105,7 @@ def calculate_tfidf(merged_index_path, total_documents):
 
                     doc_info['tf_idf'] = tf_idf * doc_info['weight']
 
-                new_merged_index.write(f'{token}:{json.dumps(data)}\n')
-
-            except json.JSONDecodeError:
-                print(f"Error parsing JSON data for line: {line}")
-                continue
+                writer.writerow([token, json.dumps(data)])
 
     os.remove(merged_index_path)
-    os.rename(merged_index_path + '.tmp', merged_index_path)
+    os.rename(temp_merged_index_path, merged_index_path)

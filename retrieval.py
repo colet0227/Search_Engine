@@ -1,3 +1,4 @@
+import csv
 import json
 import time
 import re
@@ -13,8 +14,8 @@ class IndexReader:
     def load_secondary_index(secondary_index_path):
         secondary_index = {}
         with open(secondary_index_path, 'r') as f:
-            for line in f:
-                token, offset = line.strip().split(':')
+            reader = csv.reader(f)
+            for token, offset in reader:
                 secondary_index[token] = int(offset)
         return secondary_index
 
@@ -23,24 +24,35 @@ class IndexReader:
         if line_start is not None:
             self.index_file.seek(line_start)
             line = self.index_file.readline()
-            row_token, row_data = line.split(':', 1)
+            row_token, row_data = line.strip().split(',', 1)
             if row_token == token:
                 try:
+                    # Remove extra double quotes around the json data
+                    row_data = row_data.replace('""', '"')[1:-1]
                     return json.loads(row_data)
                 except json.JSONDecodeError:
                     print(f"Error parsing JSON data: {row_data}")
         return None
 
+
 stemmer = SnowballStemmer("english")
-MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.txt'
-SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.txt'
-MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.txt'
-MAX_DOCS_PER_TOKEN = 100
+MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.csv'
+SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.csv'
+MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.csv'
+MAX_DOCS_PER_TOKEN = 10
 WEIGHT_THRESHOLD = 0.1
 
 def load_mapping(mapping_path):
+    mapping = {}
     with open(mapping_path, 'r') as file:
-        return {row.split(':', 1)[0]: row.split(':', 1)[1].strip() for row in file.readlines()}
+        next(file)  # Skip the header
+        reader = csv.reader(file, delimiter=',')
+        for row in reader:
+            if len(row) >= 2:
+                mapping[row[0]] = row[1].strip()
+            else:
+                print(f"Skipping line due to wrong format: {row}")
+    return mapping
 
 
 def preprocess_query(query):
@@ -92,3 +104,8 @@ if __name__ == '__main__':
     
     query = input("Search: ")
     print(search(query, index_reader, mapping))
+
+    # with open(MERGED_PATH, 'r') as merged_index:
+    #     merged_index.seek(2390243)  # Go to byte offset 3168
+    #     line = merged_index.readline()  # Read the line at that position
+    #     print(line)
