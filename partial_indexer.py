@@ -49,7 +49,7 @@ class PartialIndexer:
         self.current_size = 0
 
         # Max size before we create a partial index
-        self.max_size = 1000000 # 5242880 5b
+        self.max_size = 200000 # 5242880 5b
 
         # Unique doc id we increment (hash value)
         self.id_counter = 1
@@ -101,17 +101,11 @@ class PartialIndexer:
         self.current_size = sys.getsizeof(self.index)
 
     def write_partial_index(self, path):
-        # with open(path, 'w') as txtfile:
-        #     for token in sorted(self.index.keys()):
-        #         txtfile.write(f'{token}: {json.dumps(self.index[token])}\n')
-
-        # self.current_size = 0
-        # self.index.clear()
         with open(path, 'w', newline='') as csvfile:
             fieldnames = ['token', 'data']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-            writer.writeheader()
+            # writer.writeheader()
             for token in sorted(self.index.keys()):
                 writer.writerow({'token': token, 'data': json.dumps(self.index[token])})
 
@@ -125,15 +119,9 @@ class PartialIndexer:
         return self.url_id_map[url]
 
     def add_url_to_map(self, url, id, filename):
-        # with open(filename, mode='a', encoding='utf-8') as file:
-        #     file.write(f'{id}:{url}\n')
         with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['id', 'url']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-            if csvfile.tell() == 0:
-                writer.writeheader()
-
             writer.writerow({'id': id, 'url': url})
 
 

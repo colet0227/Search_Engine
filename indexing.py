@@ -19,22 +19,16 @@ def merge_partial_indices(partial_index_paths, merged_index_path):
         temp_merged_index_path = merged_index_path + '.tmp'  # Temporary merged index path
 
         with open(path, 'r') as partial_index_file, open(merged_index_path, 'r') as merged_index_file, open(temp_merged_index_path, 'w') as temp_merged_index_file:
-            partial_line = next(partial_index_file, None)
-            merged_line = next(merged_index_file, None)
+            partial_reader = csv.reader(partial_index_file)
+            merged_reader = csv.reader(merged_index_file)
+            temp_merged_writer = csv.writer(temp_merged_index_file)
 
-            while partial_line and merged_line:
-                # Skip lines in partial index that don't contain a ":"
-                if ":" not in partial_line:
-                    partial_line = next(partial_index_file, None)
-                    continue
+            partial_row = next(partial_reader, None)
+            merged_row = next(merged_reader, None)
 
-                # Skip lines in merged index that don't contain a ":"
-                if ":" not in merged_line:
-                    merged_line = next(merged_index_file, None)
-                    continue
-
-                partial_token, partial_data = partial_line.strip().split(":", 1)  # Add 1 to split only once
-                merged_token, merged_data = merged_line.strip().split(":", 1)  # Add 1 to split only once
+            while partial_row and merged_row:
+                partial_token, partial_data = partial_row
+                merged_token, merged_data = merged_row
 
                 partial_data = json.loads(partial_data)
                 merged_data = json.loads(merged_data)
@@ -44,25 +38,25 @@ def merge_partial_indices(partial_index_paths, merged_index_path):
                     merged_data['document_freq'] += partial_data['document_freq']
                     merged_data['doc_ids'].update(partial_data['doc_ids'])
 
-                    temp_merged_index_file.write(f'{merged_token}: {json.dumps(merged_data)}\n')
+                    temp_merged_writer.writerow([merged_token, json.dumps(merged_data)])
 
-                    partial_line = next(partial_index_file, None)
-                    merged_line = next(merged_index_file, None)
+                    partial_row = next(partial_reader, None)
+                    merged_row = next(merged_reader, None)
                 elif partial_token < merged_token:
-                    temp_merged_index_file.write(partial_line)
-                    partial_line = next(partial_index_file, None)
+                    temp_merged_writer.writerow(partial_row)
+                    partial_row = next(partial_reader, None)
                 else:
-                    temp_merged_index_file.write(merged_line)
-                    merged_line = next(merged_index_file, None)
+                    temp_merged_writer.writerow(merged_row)
+                    merged_row = next(merged_reader, None)
 
             # Process the remaining lines of the longer file
-            while partial_line:
-                temp_merged_index_file.write(partial_line)
-                partial_line = next(partial_index_file, None)
+            while partial_row:
+                temp_merged_writer.writerow(partial_row)
+                partial_row = next(partial_reader, None)
 
-            while merged_line:
-                temp_merged_index_file.write(merged_line)
-                merged_line = next(merged_index_file, None)
+            while merged_row:
+                temp_merged_writer.writerow(merged_row)
+                merged_row = next(merged_reader, None)
 
         os.remove(merged_index_path)  # Delete the old merged index
         os.rename(temp_merged_index_path, merged_index_path)  # Rename the temp to merged
