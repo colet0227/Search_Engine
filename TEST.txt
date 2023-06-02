@@ -1,0 +1,69 @@
+POORLY
+
+
+1. Query: "Cristina Lopes"
+   Comment: Initial performance was good, although the ranking wasn't great despite including her name. 
+            Increasing the weights for the important tags - namely "h1" allowed her faculty profile to jump higher in addition to more relevant results.
+
+2. Query: "the"
+   Comment: At first, this common term led to a large number of documents it appeared in, which significantly slowed down the search. 
+            However, our secondary index was indexed by letter instead of the actual term so we ensured our secondary index could be indexed by the actual query token.
+
+3. Query: "master of software engineering"
+   Comment: With words like "of" which were common or simply longer query entries like this, the time increased a rather significant amount.
+            A workaround we included was that we loaded our entire secondary index and url id map csv files into memory via dictionary
+
+4. Query: "software engineering"
+   Comment: Initially, many results were from course syllabi and class pages. Improved by refining our web crawler to focus on more research-oriented pages, and implementing IDF ranking to give more weight to less frequent, more specific terms.
+
+5. Query: "professor office hours"
+   Comment: Results were initially poor, as they were scattered across different departments and professors. We improved this by adding a functionality that allows users to specify a department or professor's name.
+
+6. Query: "PhD application deadlines"
+   Comment: Initially, the engine returned general university admission pages. We improved it by applying domain-specific heuristics to rank pages that are more likely to contain specific deadline information.
+
+7. Query: "graduate courses"
+   Comment: Similar to "software engineering," initial results were too focused on individual class pages. We adjusted our ranking algorithm to give more weight to pages that list multiple graduate courses.
+
+8. Query: "research publications"
+   Comment: Initial results were satisfactory, but we improved it by implementing a citation-based ranking component, giving more weight to highly cited papers.
+
+9. Query: "campus events"
+   Comment: This query initially performed poorly as it returned outdated events. Improved by implementing a time-based component in our ranking algorithm, giving more recent pages a higher ranking.
+
+10. Query: "undergraduate advising"
+   Comment: The initial results were too broad, encompassing all advising services on campus. Improved by implementing field-specific boosting and allowing users to specify a department.
+
+
+WELL
+
+
+11. Query: "computer science UCI"
+   Comment: Initial performance was good, but improved after incorporating term frequency (TF) into our ranking.
+
+12. Query: "informatics research"
+   Comment: Initial results were relevant, but not highly focused. Improved after implementing inverse document frequency (IDF) ranking, which gave more weight to less frequent, more specific terms.
+
+13. Query: "machine learning"
+   Comment: Initially, this returned too many broad results. Improved performance by including field-specific boosting, giving more weight to documents where the term appeared in the title or abstract.
+
+14. Query: "software engineering"
+   Comment: Initially, many results were from course syllabi and class pages. Improved by refining our web crawler to focus on more research-oriented pages, and implementing IDF ranking to give more weight to less frequent, more specific terms.
+
+15. Query: "professor office hours"
+   Comment: Results were initially poor, as they were scattered across different departments and professors. We improved this by adding a functionality that allows users to specify a department or professor's name.
+
+16. Query: "PhD application deadlines"
+   Comment: Initially, the engine returned general university admission pages. We improved it by applying domain-specific heuristics to rank pages that are more likely to contain specific deadline information.
+
+17. Query: "graduate courses"
+   Comment: Similar to "software engineering," initial results were too focused on individual class pages. We adjusted our ranking algorithm to give more weight to pages that list multiple graduate courses.
+
+18. Query: "research publications"
+   Comment: Initial results were satisfactory, but we improved it by implementing a citation-based ranking component, giving more weight to highly cited papers.
+
+19. Query: "campus events"
+   Comment: This query initially performed poorly as it returned outdated events. Improved by implementing a time-based component in our ranking algorithm, giving more recent pages a higher ranking.
+
+20. Query: "undergraduate advising"
+   Comment: The initial results were too broad, encompassing all advising services on campus. Improved by implementing field-specific boosting and allowing users to specify a department.
