@@ -100,7 +100,8 @@ def calculate_tfidf(merged_index_path, total_documents):
                 data_str = row[1]
                 try:
                     data = json.loads(data_str)
-                except json.JSONDecodeError as e:
+                except json.JSONDecodeError:
+                    # Just in case
                     print(f"Error parsing JSON data for line: {row}")
                     continue
                 
