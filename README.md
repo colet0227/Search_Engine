@@ -1,7 +1,8 @@
 # Search Engine
-<img width="1440" alt="Screenshot 2023-06-02 at 10 05 12 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/e0ba9ca6-664f-4264-9dee-39f94321663a">
-<img width="1440" alt="Screenshot 2023-06-02 at 10 06 12 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/25836bf8-2c5a-4da8-bcb3-710903afa0e7">
-<img width="1440" alt="Screenshot 2023-06-02 at 10 06 32 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/c03214e9-4f37-4b10-8be6-f2c7d1d48d16">
+<img width="1440" alt="Screenshot 2023-06-02 at 10 10 29 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/62c09412-679b-4607-b47b-f6a968d9f59c">
+<img width="1440" alt="Screenshot 2023-06-02 at 10 10 36 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/b605f62e-9a6f-49dd-a981-9679edef68ea">
+<img width="1440" alt="Screenshot 2023-06-02 at 10 10 42 AM" src="https://github.com/colet0227/Search_Engine/assets/10394057/315babed-0c8c-4f48-87c2-c26dd4130859">
+
 
 # How to Run:
 
