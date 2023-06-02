@@ -13,57 +13,63 @@ POORLY
    Comment: With words like "of" which were common or simply longer query entries like this, the time increased a rather significant amount.
             A workaround we included was that we loaded our entire secondary index and url id map csv files into memory via dictionary
 
-4. Query: "software engineering"
-   Comment: Initially, many results were from course syllabi and class pages. Improved by refining our web crawler to focus on more research-oriented pages, and implementing IDF ranking to give more weight to less frequent, more specific terms.
+4. Query: "computer science"
+   Comment: The results were a little scattered and took longer than expected. 
+            Although the corpus generated only has the token appear 233 times, the results were broad and were usually little pieces of information. Cosine similarity helped.
 
-5. Query: "professor office hours"
-   Comment: Results were initially poor, as they were scattered across different departments and professors. We improved this by adding a functionality that allows users to specify a department or professor's name.
+5. Query: "the of and if"
+   Comment: This took even longer at first because of multiple common words.
+            Ultimately we decided instead of doing something where we'd start with documents that included all the terms and then decrement, we just used a simple cosine similarity implementation.
 
-6. Query: "PhD application deadlines"
-   Comment: Initially, the engine returned general university admission pages. We improved it by applying domain-specific heuristics to rank pages that are more likely to contain specific deadline information.
+6. Query: "graduate courses"
+   Comment: This was a pretty standard query but we found that using csv files instead of our initial txt file implementation improved efficiency slightly.
 
-7. Query: "graduate courses"
-   Comment: Similar to "software engineering," initial results were too focused on individual class pages. We adjusted our ranking algorithm to give more weight to pages that list multiple graduate courses.
+7. Query: "research publications"
+   Comment: Similar to the previous tokens on example 6, this wasn't necessarily a query we struggled a lot with.
+            We noticed that using json data formats instead of trying to split by a comma and look through the text made it extremely fast and efficient
 
-8. Query: "research publications"
-   Comment: Initial results were satisfactory, but we improved it by implementing a citation-based ranking component, giving more weight to highly cited papers.
+8. Query: "machine learning"
+   Comment: It wasn't too slow, but the query times were slightly higher than optimal.
+            Top k document returning further increased the speed of the search by reducing the amount of data that needs to be processed and returned to the user.
 
-9. Query: "campus events"
-   Comment: This query initially performed poorly as it returned outdated events. Improved by implementing a time-based component in our ranking algorithm, giving more recent pages a higher ranking.
+9. Query: "Informatics"
+   Comment: This query was also general and broad and didn't really focus in on documents that centered around informatics.
+            Our best approach to fix this was again increasing the weight of our HTML tags.
 
-10. Query: "undergraduate advising"
-   Comment: The initial results were too broad, encompassing all advising services on campus. Improved by implementing field-specific boosting and allowing users to specify a department.
+10. Query: "zot the"
+   Comment: Words like "the" would make the query dispatch time much longer than we wanted.
+            We only wanted to retrieve documents that included "zot" because it's tf-idf score but cosine similarity took care of this.
 
 
 WELL
 
 
-11. Query: "computer science UCI"
-   Comment: Initial performance was good, but improved after incorporating term frequency (TF) into our ranking.
+11. Query: "Hungry"
+   Comment: Although I mainly tested this in ANALYST before DEV, it was only in a single document regardless so it was extremely efficient and dropped the url immediately.
 
-12. Query: "informatics research"
-   Comment: Initial results were relevant, but not highly focused. Improved after implementing inverse document frequency (IDF) ranking, which gave more weight to less frequent, more specific terms.
+12. Query: "coalless"
+   Comment: Immediate results because it's only in the https://www.ics.uci.edu/~kay/wordlist.txt document and no where else haha.
 
-13. Query: "machine learning"
-   Comment: Initially, this returned too many broad results. Improved performance by including field-specific boosting, giving more weight to documents where the term appeared in the title or abstract.
+13. Query: "Python programming"
+   Comment: Worked pretty well due to enough specificity within the corpus for efficiency while still being able to maintain relevant results
 
-14. Query: "software engineering"
-   Comment: Initially, many results were from course syllabi and class pages. Improved by refining our web crawler to focus on more research-oriented pages, and implementing IDF ranking to give more weight to less frequent, more specific terms.
+14. Query: "biologist"
+   Comment: Single terms that centered around a subject or topic generally retrieved relevant and more focused results than terms that might be seen in a variety of documents
 
-15. Query: "professor office hours"
-   Comment: Results were initially poor, as they were scattered across different departments and professors. We improved this by adding a functionality that allows users to specify a department or professor's name.
+15. Query: "covid"
+   Comment: The search results were quite relevant from the start.
 
-16. Query: "PhD application deadlines"
-   Comment: Initially, the engine returned general university admission pages. We improved it by applying domain-specific heuristics to rank pages that are more likely to contain specific deadline information.
+16. Query: "Faculty"
+   Comment: Initially, the engine just resulted in a lot of different links with different faculty members and I'd argue that's a positive implementation.
 
-17. Query: "graduate courses"
-   Comment: Similar to "software engineering," initial results were too focused on individual class pages. We adjusted our ranking algorithm to give more weight to pages that list multiple graduate courses.
+17. Query: "graduate"
+   Comment: Even initially, the model was successful in identifying pages related to graduate studies, including degree programs and graduate courses. This showed a good grasp of the term's relevance in an academic setting.
 
-18. Query: "research publications"
-   Comment: Initial results were satisfactory, but we improved it by implementing a citation-based ranking component, giving more weight to highly cited papers.
+18. Query: "Quantum"
+   Comment: Although it didn't really have any links with quantum as its main topic, you didn't have to search through the urls very far.
 
 19. Query: "campus events"
-   Comment: This query initially performed poorly as it returned outdated events. Improved by implementing a time-based component in our ranking algorithm, giving more recent pages a higher ranking.
+   Comment: Returned events.
 
-20. Query: "undergraduate advising"
-   Comment: The initial results were too broad, encompassing all advising services on campus. Improved by implementing field-specific boosting and allowing users to specify a department.
+20. Query: "project"
+   Comment: Returned projects.
