@@ -2,7 +2,6 @@ import csv
 import json
 import time
 import re
-import heapq
 import math
 from nltk.stem import SnowballStemmer
 

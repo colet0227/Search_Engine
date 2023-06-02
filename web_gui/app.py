@@ -6,9 +6,9 @@ from retrieval import search, IndexReader, load_mapping
 
 app = Flask(__name__)
 
-MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.txt'
-SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.txt'
-MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.txt'
+MERGED_PATH = '/Users/colethompson/Documents/A3/Updated/merged_index.csv'
+SECONDARY_PATH = '/Users/colethompson/Documents/A3/Updated/secondary_index.csv'
+MAPPING_PATH = '/Users/colethompson/Documents/A3/Updated/url_id_map.csv'
 
 index_reader = IndexReader(MERGED_PATH, SECONDARY_PATH)
 mapping = load_mapping(MAPPING_PATH)

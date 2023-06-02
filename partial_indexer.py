@@ -1,7 +1,6 @@
 import re
 import sys
 import json
-import math
 import csv
 from collections import defaultdict
 from bs4 import BeautifulSoup
@@ -49,7 +48,7 @@ class PartialIndexer:
         self.current_size = 0
 
         # Max size before we create a partial index
-        self.max_size = 200000 # 5242880 5b
+        self.max_size = 5242880 # 5mb
 
         # Unique doc id we increment (hash value)
         self.id_counter = 1
@@ -62,18 +61,27 @@ class PartialIndexer:
         return [self.stemmer.stem(token.lower()) for token in tokens]
 
     def add_document(self, document, document_url, url_id_map_path):
+        # Defrag document url
         document_url, _ = urldefrag(document_url)
+
+        # Break if the URL is already in the url_id_map
         if document_url in self.url_id_map:
             return
 
+        # Get or create an id for the document URL
         id = self.get_id(document_url)
+
+        # Parse the document with BeautifulSoup
         soup = BeautifulSoup(document, 'html.parser')
 
+        # Add the document URL to the url_id_map
         self.add_url_to_map(document_url, id, url_id_map_path)
 
+        # Extract all text from the document and tokenize it
         all_text = soup.get_text()
         tokens = self.tokenize_and_stem(all_text)
 
+        # Update the index with the tokens
         for token in tokens:
             self.index[token]['token_freq'] += 1
             if id not in self.index[token]['doc_ids']:
@@ -82,6 +90,7 @@ class PartialIndexer:
             else:
                 self.index[token]['doc_ids'][id]['freq'] += 1
 
+        # Iterate over all HTML tags in the document and update weights
         for tag in soup.find_all():
             weight = self.HTML_WEIGHTS.get(tag.name, 1)
             important_tokens = self.tokenize_and_stem(tag.get_text())
@@ -90,35 +99,41 @@ class PartialIndexer:
                 if token in self.index and id in self.index[token]['doc_ids']:
                     self.index[token]['doc_ids'][id]['weight'] += weight
 
+        # Update the current size of the index
         self.update_index_size()
         self.current_size += len(document.encode('utf-8'))
 
 
     def should_write_partial_index(self):
+        # Check if the current size of the index exceeds the maximum size
         return self.current_size >= self.max_size
 
     def update_index_size(self):
+        # Update the current size of the index
         self.current_size = sys.getsizeof(self.index)
 
     def write_partial_index(self, path):
+        # Write the current index to a partial index file
         with open(path, 'w', newline='') as csvfile:
             fieldnames = ['token', 'data']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-            # writer.writeheader()
             for token in sorted(self.index.keys()):
                 writer.writerow({'token': token, 'data': json.dumps(self.index[token])})
 
+        # Reset the current size and clear the index
         self.current_size = 0
         self.index.clear()
 
     def get_id(self, url):
+        # If the URL is not in the url_id_map, add it and increment the id_counter
         if url not in self.url_id_map:
             self.url_id_map[url] = self.id_counter
             self.id_counter += 1
         return self.url_id_map[url]
 
     def add_url_to_map(self, url, id, filename):
+        # Add the URL and its id to the url_id_map file
         with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['id', 'url']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
