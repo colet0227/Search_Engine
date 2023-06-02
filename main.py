@@ -75,9 +75,14 @@ if __name__ == "__main__":
 
     # Merge all partial indices into a single index
     merge_partial_indices(partial_index_paths, merged_index_path)
+
+    # Count total number of documents
     total_documents = count_documents(url_id_map_path)
+
+    # Calculate tf-idf for each term in each document
     calculate_tfidf(merged_index_path, total_documents)
     
+    # Clean up partial index files
     for path in partial_index_paths:
         try:
             os.remove(path)
