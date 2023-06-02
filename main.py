@@ -1,5 +1,7 @@
 import os
 import json
+import csv
+import sys
 from partial_indexer import PartialIndexer
 from indexing import merge_partial_indices, generate_secondary_index, count_documents, calculate_tfidf
 
@@ -20,6 +22,9 @@ if __name__ == "__main__":
     ###########
     ###########
     ###########
+
+    # Otherwise field larger than field limit (131072)
+    csv.field_size_limit(sys.maxsize)
 
     # Initialize a new partial indexer
     partial_indexer = PartialIndexer()
