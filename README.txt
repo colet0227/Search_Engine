@@ -20,12 +20,21 @@ Indexing:
     - After this is complete comment out other code in __main__ function and generate secondary index
         - python3 main.py
     - You should now have a "merged_index.csv", "secondary_index.csv", and "url_id_map.csv" file
-
-Terminal GUI:
-    - python3 retrieval.py
-
-Web GUI:
+    
+   
+Web GUI/Search Interface:
     - Enter web gui directory
         - cd web_gui/
     - python3 app.py
     - You can view development server at "http://127.0.0.1:5001"
+    
+   
+Simple Query:
+    - The interface will prompt the user for a query
+    - After entering the requested/desired query, our program will use calculations such as  td-idf, similarity, and indexing to create the list
+    - This list will be the result of ranked pages with the most relevant at the start/beginning
+      
+
+Terminal GUI:
+    - python3 retrieval.py
+
