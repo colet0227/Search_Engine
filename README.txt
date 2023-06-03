@@ -21,6 +21,13 @@ Indexing:
         - python3 main.py
     - You should now have a "merged_index.csv", "secondary_index.csv", and "url_id_map.csv" file
 
+Search Interface:
+
+
+
+Search Query:
+
+
 Terminal GUI:
     - python3 retrieval.py
 
