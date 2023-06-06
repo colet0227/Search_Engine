@@ -6,18 +6,18 @@
 
 # How to Run:
 
-Prerequisites:
+1. Prerequisites:
     - macOS 10.15+
     - Python 3.9+
 
-Setup:
+2. Setup:
     - Ensure necessary Python packages are installed
         - pip install flask
         - pip install nltk
         - pip install beautifulsoup4
             - Depending on system, you may need to use "pip3" instead of "pip"
 
-Indexing:
+3. Indexing:
     - Replace root files in "retrieval.py" and "main.py" to match your system
     - First run main.py without generating secondary index
         - This is because there is a byte offset error when we try doing it immediately after
@@ -28,18 +28,18 @@ Indexing:
     - You should now have a "merged_index.csv", "secondary_index.csv", and "url_id_map.csv" file
     
    
-Web GUI/Search Interface:
+4. Web GUI/Search Interface:
     - Enter web gui directory
         - cd web_gui/
     - python3 app.py
     - You can view development server at "http://127.0.0.1:5001"
     
    
-Simple Query:
+5. Simple Query:
     - The interface will prompt the user for a query
     - After entering the requested/desired query, our program will use calculations such as  td-idf, similarity, and indexing to create the list
     - This list will be the result of ranked pages with the most relevant at the start/beginning
       
 
-Terminal GUI:
+6. Terminal GUI:
     - python3 retrieval.py
